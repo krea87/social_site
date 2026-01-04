@@ -1,9 +1,13 @@
 package se.jensen.johan.socialsite.mapper;
 
 import org.springframework.stereotype.Component;
+import se.jensen.johan.socialsite.dto.PostResponseDTO;
 import se.jensen.johan.socialsite.dto.UserRequestDTO;
 import se.jensen.johan.socialsite.dto.UserResponseDTO;
+import se.jensen.johan.socialsite.dto.UserWithPostsResponseDTO;
 import se.jensen.johan.socialsite.model.User;
+
+import java.util.List;
 
 @Component
 public class UserMapper {
@@ -31,5 +35,19 @@ public class UserMapper {
                 user.getBio(),
                 user.getProfileImagePath());
         return dto;
+    }
+
+    public UserWithPostsResponseDTO toWithPostsDto(User user) {
+        UserResponseDTO userDto = toDto(user);
+
+        List<PostResponseDTO> posts = user.getPosts()
+                .stream()
+                .map(p -> new PostResponseDTO(
+                        p.getId(),
+                        p.getText(),
+                        p.getCreatedAt()
+                ))
+                .toList();
+        return new UserWithPostsResponseDTO(userDto, posts);
     }
 }

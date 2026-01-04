@@ -50,27 +50,9 @@ public class UserService {
         User user = userRepository.findUserWithPosts(id)
                 .orElseThrow(() -> new NoSuchElementException("Ingen user i databasen med id: " + id));
 
-        List<PostResponseDTO> posts = user.getPosts()
-                .stream()
-                .map(p -> new PostResponseDTO(
-                        p.getId(),
-                        p.getText(),
-                        p.getCreatedAt()
-                ))
-                .toList();
-        UserResponseDTO dto = new UserResponseDTO(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole(),
-                user.getDisplayName(),
-                user.getBio(),
-                user.getProfileImagePath()
-        );
-        UserWithPostsResponseDTO dtoToReturn =
-                new UserWithPostsResponseDTO(dto, posts);
+        UserWithPostsResponseDTO dto = userMapper.toWithPostsDto(user);
 
-        return dtoToReturn;
+        return dto;
     }
 
     public UserResponseDTO addUser(UserRequestDTO userDto) {
