@@ -1,8 +1,10 @@
 package se.jensen.johan.socialsite.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import se.jensen.johan.socialsite.dto.*;
 import se.jensen.johan.socialsite.model.Post;
@@ -29,6 +31,7 @@ public class UserController {
         this.postService = postService;
     }
 
+    @PreAuthorize( "hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
 
@@ -60,6 +63,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDTO> getUser(@PathVariable Long id) {
 
@@ -68,6 +72,14 @@ public class UserController {
 
         return ResponseEntity.ok(userById);
     }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/me")
+    public UserResponseDTO getMe (Authentication authentication){
+        String username = authentication.getName();
+        return userService.getUserResponseByUsername(username);
+    }
+
 
     @GetMapping("/{id}/with-posts")
     public ResponseEntity<UserWithPostsResponseDTO> getUserWithPosts(@PathVariable Long id) {

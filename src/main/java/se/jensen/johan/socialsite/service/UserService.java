@@ -1,6 +1,7 @@
 package se.jensen.johan.socialsite.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import se.jensen.johan.socialsite.dto.PostResponseDTO;
@@ -21,13 +22,14 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final GlobalExceptionHandler globalExceptionHandler;
+    private final PasswordEncoder passwordEncoder;
 
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, GlobalExceptionHandler globalExceptionHandler) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, GlobalExceptionHandler globalExceptionHandler, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
-        this.globalExceptionHandler = globalExceptionHandler;
+
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<UserResponseDTO> getAllUsers() {
@@ -63,6 +65,11 @@ public class UserService {
         if (exists) {
             throw new IllegalArgumentException("User eller email finns redan i databasen");
         }
+
+        // Hashar lösenordet
+        String rawPassword = user.getPassword();
+        user.setPassword(passwordEncoder.encode(rawPassword));
+
         User savedUsed = userRepository.save(user);
 
         return UserMapper.toDto(savedUsed);
@@ -76,6 +83,17 @@ public class UserService {
         return UserMapper.toDto(user);
     }
 
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public UserResponseDTO getUserResponseByUsername(String username) {
+        User user = getUserByUsername(username);
+        return UserMapper.toDto(user);
+    }
+
+
     public UserResponseDTO update(Long id, UserRequestDTO dto) {
 
         //Optional-variant för att hitta user med id med en hjälpmetod
@@ -84,7 +102,9 @@ public class UserService {
 
         // sätter nya värden
         user.setUsername(dto.username());
-        user.setPassword(dto.password());
+        if (dto.password() != null && !dto.password().isBlank()) {
+            user.setPassword(passwordEncoder.encode(dto.password()));
+        }
         user.setRole(dto.role());
         user.setDisplayName(dto.displayName());
         user.setBio(dto.bio());
