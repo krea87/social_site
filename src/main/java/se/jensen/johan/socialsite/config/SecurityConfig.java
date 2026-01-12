@@ -6,6 +6,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -15,15 +16,19 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-            http.csrf(csrf -> csrf.disable());
+        http.csrf(csrf -> csrf.disable());
 
-//                http.authorizeHttpRequests(auth -> auth
-//                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
-//                                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-//                        .anyRequest().authenticated()
-//                        )
-//                .formLogin(Customizer.withDefaults())
-//                        .httpBasic(Customizer.withDefaults());
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                .requestMatchers(
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/swagger-ui.html"
+                ).permitAll()
+                .requestMatchers("/request-token").permitAll()
+                .anyRequest().authenticated());
+        http.formLogin(Customizer.withDefaults());
+
         return http.build();
     }
 
