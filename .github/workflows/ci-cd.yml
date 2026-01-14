@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  DOCKER_IMAGE: dockerhub-krea87/social_site
+  DOCKER_IMAGE: krea87/social_site
 
 jobs:
   build-and-deploy:
