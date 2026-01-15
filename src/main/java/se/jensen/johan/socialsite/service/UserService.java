@@ -1,5 +1,7 @@
 package se.jensen.johan.socialsite.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,9 +22,12 @@ import java.util.Optional;
 @Service
 public class UserService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    
 
 
     public UserService(UserRepository userRepository, UserMapper userMapper, GlobalExceptionHandler globalExceptionHandler, PasswordEncoder passwordEncoder) {
@@ -50,7 +55,10 @@ public class UserService {
 
     public UserWithPostsResponseDTO getUserWithPosts(Long id) {
         User user = userRepository.findUserWithPosts(id)
-                .orElseThrow(() -> new NoSuchElementException("Ingen user i databasen med id: " + id));
+                .orElseThrow(() -> {
+                    logger.warn("Misslyckades att hämta användare med inlägg. Ingen användare hittades med id: {}", id);
+                    return new NoSuchElementException("Ingen user i databasen med id: " + id);
+                });
 
         UserWithPostsResponseDTO dto = userMapper.toWithPostsDto(user);
 
@@ -63,6 +71,7 @@ public class UserService {
         // Kollar om username eller email finns
         boolean exists = userRepository.existsByUsernameOrEmail(user.getUsername(), user.getEmail());
         if (exists) {
+            logger.warn("Kunde inte lägga till användare. Användarnamn '{}' eller e-post '{}' finns redan.", user.getUsername(), user.getEmail());
             throw new IllegalArgumentException("User eller email finns redan i databasen");
         }
 
@@ -71,6 +80,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(rawPassword));
 
         User savedUsed = userRepository.save(user);
+        logger.info("Ny användare skapad med id: {} och användarnamn: {}", savedUsed.getId(), savedUsed.getUsername());
 
         return UserMapper.toDto(savedUsed);
     }
@@ -123,12 +133,16 @@ public class UserService {
 
         // Raderar den hittade usern
         userRepository.deleteById(id);
+        logger.info("Användare med id {} har raderats.", id);
     }
 
 
     // lägga denna i en utility-klass senare kanske
     public User findUserOrThrow(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Ingen user i databasen med id: " + id));
+                .orElseThrow(() -> {
+                    logger.warn("Sökning misslyckades: Ingen användare hittades med id: {}", id);
+                    return new NoSuchElementException("Ingen user i databasen med id: " + id);
+                });
     }
 }

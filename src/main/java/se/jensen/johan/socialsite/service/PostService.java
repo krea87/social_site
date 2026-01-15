@@ -1,5 +1,7 @@
 package se.jensen.johan.socialsite.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import se.jensen.johan.socialsite.dto.PostRequestDTO;
 import se.jensen.johan.socialsite.dto.PostResponseDTO;
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
 @Service
 public class PostService {
 
+    private static final Logger logger = LoggerFactory.getLogger(PostService.class);
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
@@ -25,6 +28,8 @@ public class PostService {
     }
 
     public PostResponseDTO createPost(Long userId, PostRequestDTO postDto){
+        logger.info("Försöker skapa ett nytt inlägg för användare med id: {}", userId);
+        
         Post post = new Post();
         post.setText(postDto.text());
         post.setCreatedAt(LocalDateTime.now());
@@ -34,6 +39,7 @@ public class PostService {
         post.setUser(user);
 
         Post savedPost = postRepository.save(post);
+        logger.info("Inlägg skapat med id: {} för användare: {}", savedPost.getId(), userId);
 
         return new PostResponseDTO(savedPost.getId(), savedPost.getText(), savedPost.getCreatedAt());
     }
